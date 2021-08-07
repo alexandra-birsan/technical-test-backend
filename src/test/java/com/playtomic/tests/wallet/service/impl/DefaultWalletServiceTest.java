@@ -1,7 +1,7 @@
 package com.playtomic.tests.wallet.service.impl;
 
 import com.playtomic.tests.wallet.dao.WalletDao;
-import com.playtomic.tests.wallet.dto.RechargeRequest;
+import com.playtomic.tests.wallet.dto.TopUpRequest;
 import com.playtomic.tests.wallet.dto.WalletDto;
 import com.playtomic.tests.wallet.exception.StripeServiceException;
 import com.playtomic.tests.wallet.exception.WalletNotFoundException;
@@ -48,9 +48,8 @@ public class DefaultWalletServiceTest {
     @Test
     void rechargeWalletWhenWalletNotFound() {
         when(repository.findById(WALLET_ID)).thenReturn(Mono.error(new WalletNotFoundException()));
-        RechargeRequest request = createRechargeRequest();
 
-        sendTopUpRequest(request)
+        sendTopUpRequest(createTopUpRequest())
                 .expectError(WalletNotFoundException.class)
                 .verify();
     }
@@ -58,10 +57,9 @@ public class DefaultWalletServiceTest {
     @Test
     void rechargeWalletWhenStripeExceptionThrown() {
         mockSuccessfulFindById();
-        when(stripeService.charge(CREDIT_CARD_NUMBER, RECHARGE_AMOUNT)).thenReturn(Mono.error(new StripeServiceException()));
-        RechargeRequest request = createRechargeRequest();
+        when(stripeService.charge(CREDIT_CARD_NUMBER, TOP_UP_AMOUNT)).thenReturn(Mono.error(new StripeServiceException()));
 
-        sendTopUpRequest(request)
+        sendTopUpRequest(createTopUpRequest())
                 .expectError(StripeServiceException.class)
                 .verify();
     }
@@ -71,14 +69,13 @@ public class DefaultWalletServiceTest {
         mockSuccessfulFindById();
         mockSuccessfulSave();
         mockSuccessfulStripeCall();
-        RechargeRequest request = createRechargeRequest();
 
-        sendTopUpRequest(request)
-                .expectNext(new WalletDto(WALLET_ID, CURRENT_BALANCE.add(RECHARGE_AMOUNT)))
+        sendTopUpRequest(createTopUpRequest())
+                .expectNext(new WalletDto(WALLET_ID, CURRENT_BALANCE.add(TOP_UP_AMOUNT)))
                 .verifyComplete();
     }
 
-    private StepVerifier.FirstStep<WalletDto> sendTopUpRequest(RechargeRequest request) {
+    private StepVerifier.FirstStep<WalletDto> sendTopUpRequest(TopUpRequest request) {
         return StepVerifier.create(walletService.recharge(WALLET_ID, request));
     }
 
@@ -87,18 +84,11 @@ public class DefaultWalletServiceTest {
     }
 
     private void mockSuccessfulSave() {
-        WalletDao updatedWallet = new WalletDao(WALLET_ID, CURRENT_BALANCE.add(RECHARGE_AMOUNT));
+        WalletDao updatedWallet = new WalletDao(WALLET_ID, CURRENT_BALANCE.add(TOP_UP_AMOUNT));
         when(repository.save(updatedWallet)).thenReturn(Mono.just(updatedWallet));
     }
 
     private void mockSuccessfulStripeCall() {
-        when(stripeService.charge(CREDIT_CARD_NUMBER, RECHARGE_AMOUNT)).thenReturn(Mono.just(true));
-    }
-
-    private RechargeRequest createRechargeRequest() {
-        RechargeRequest request = new RechargeRequest();
-        request.setAmount(RECHARGE_AMOUNT);
-        request.setCreditCardNumber(CREDIT_CARD_NUMBER);
-        return request;
+        when(stripeService.charge(CREDIT_CARD_NUMBER, TOP_UP_AMOUNT)).thenReturn(Mono.just(true));
     }
 }

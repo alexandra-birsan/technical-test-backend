@@ -15,19 +15,19 @@ public class DefaultStripeServiceTest {
 
     @Test
     public void chargeWhenInvalidAmount() {
-        sendChargeRequest(5)
+        sendPaymentRequest(5)
                 .expectError(StripeServiceException.class)
                 .verify();
     }
 
     @Test
     public void chargeSuccessfully() {
-        sendChargeRequest(15)
+        sendPaymentRequest(15)
                 .expectNext(true)
                 .verifyComplete();
     }
 
-    private StepVerifier.FirstStep<Boolean> sendChargeRequest(int chargeAmount) {
+    private StepVerifier.FirstStep<Boolean> sendPaymentRequest(int chargeAmount) {
         return StepVerifier.create(stripeService.charge(CREDIT_CARD_NUMBER, new BigDecimal(chargeAmount)));
     }
 }

@@ -2,8 +2,8 @@ package com.playtomic.tests.wallet.service.impl;
 
 import com.playtomic.tests.wallet.api.WalletController;
 import com.playtomic.tests.wallet.dao.WalletDao;
-import com.playtomic.tests.wallet.dto.ChargeRequest;
-import com.playtomic.tests.wallet.dto.RechargeRequest;
+import com.playtomic.tests.wallet.dto.PaymentRequest;
+import com.playtomic.tests.wallet.dto.TopUpRequest;
 import com.playtomic.tests.wallet.dto.WalletDto;
 import com.playtomic.tests.wallet.exception.InsufficientFundsException;
 import com.playtomic.tests.wallet.exception.WalletNotFoundException;
@@ -31,7 +31,7 @@ public class DefaultWalletService implements WalletService {
     }
 
     @Override
-    public Mono<WalletDto> charge(Long walletId, ChargeRequest request) {
+    public Mono<WalletDto> charge(Long walletId, PaymentRequest request) {
         return findWalletDao(walletId)
                 .filter(walletDao -> walletDao.getCurrentBalance().compareTo(request.getAmount()) >= 0)
                 .switchIfEmpty(Mono.error(new InsufficientFundsException()))
@@ -45,7 +45,7 @@ public class DefaultWalletService implements WalletService {
     }
 
     @Override
-    public Mono<WalletDto> recharge(Long walletId, RechargeRequest request) {
+    public Mono<WalletDto> recharge(Long walletId, TopUpRequest request) {
         return findWalletDao(walletId)
                 .flatMap(wallet -> stripeService.charge(request.getCreditCardNumber(), request.getAmount())
                         .map(v -> wallet))

@@ -1,7 +1,7 @@
 package com.playtomic.tests.wallet.service;
 
-import com.playtomic.tests.wallet.dto.ChargeRequest;
-import com.playtomic.tests.wallet.dto.RechargeRequest;
+import com.playtomic.tests.wallet.dto.PaymentRequest;
+import com.playtomic.tests.wallet.dto.TopUpRequest;
 import com.playtomic.tests.wallet.dto.WalletDto;
 import reactor.core.publisher.Mono;
 
@@ -17,7 +17,7 @@ public interface WalletService {
      * @param request  The request body containing the payment amount
      * @return The updated wallet
      */
-    Mono<WalletDto> charge(Long walletId, ChargeRequest request);
+    Mono<WalletDto> charge(Long walletId, PaymentRequest request);
 
     /**
      * Performs a top-up on the specified wallet
@@ -26,7 +26,7 @@ public interface WalletService {
      * @param request  The request body containing the top-up amount
      * @return The updated wallet
      */
-    Mono<WalletDto> recharge(Long walletId, RechargeRequest request);
+    Mono<WalletDto> recharge(Long walletId, TopUpRequest request);
 
     /**
      * @param walletId The id of the wallet to be found

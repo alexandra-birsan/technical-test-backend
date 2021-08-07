@@ -1,8 +1,7 @@
 package com.playtomic.tests.wallet.api;
 
-import com.playtomic.tests.wallet.dto.ChargeRequest;
+import com.playtomic.tests.wallet.dto.PaymentRequest;
 import com.playtomic.tests.wallet.dto.WalletDto;
-import com.playtomic.tests.wallet.exception.AppError;
 import com.playtomic.tests.wallet.service.impl.DefaultWalletService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,31 +33,29 @@ public class WalletControllerTest {
     @ValueSource(doubles = {-2.0, 0.0})
     @NullSource
     void invalidChargeAmount(Double rechargeAmount) {
-        ChargeRequest chargeRequest = new ChargeRequest();
-        chargeRequest.setAmount(Optional.ofNullable(rechargeAmount).map(BigDecimal::valueOf).orElse(null));
+        PaymentRequest paymentRequest = new PaymentRequest();
+        paymentRequest.setAmount(Optional.ofNullable(rechargeAmount).map(BigDecimal::valueOf).orElse(null));
 
-        sendPaymentRequest(chargeRequest)
-                .expectStatus().isBadRequest()
-                .expectBody(AppError.class)
-                .isEqualTo(new AppError("Invalid amount!"));
+        sendPaymentRequest(paymentRequest)
+                .expectStatus().isBadRequest();
     }
 
     @Test
     void successfulCharge() {
-        ChargeRequest chargeRequest = createChargeRequest();
-        WalletDto data = new WalletDto(WALLET_ID, BigDecimal.valueOf(CHARGE_AMOUNT));
-        when(walletService.charge(WALLET_ID, chargeRequest)).thenReturn(Mono.just(data));
+        PaymentRequest paymentRequest = createPaymentRequest();
+        WalletDto data = new WalletDto(WALLET_ID, PAYMENT_AMOUNT);
+        when(walletService.charge(WALLET_ID, paymentRequest)).thenReturn(Mono.just(data));
 
-        sendPaymentRequest(chargeRequest)
+        sendPaymentRequest(paymentRequest)
                 .expectStatus().isOk()
                 .expectBody(WalletDto.class)
                 .isEqualTo(data);
     }
 
-    private WebTestClient.ResponseSpec sendPaymentRequest(ChargeRequest chargeRequest) {
+    private WebTestClient.ResponseSpec sendPaymentRequest(PaymentRequest paymentRequest) {
         return webClient.put()
                 .uri(String.format("/wallet/%s/payment", WALLET_ID))
-                .bodyValue(chargeRequest)
+                .bodyValue(paymentRequest)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .exchange();
