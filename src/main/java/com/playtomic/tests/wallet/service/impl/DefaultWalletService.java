@@ -35,27 +35,36 @@ public class DefaultWalletService implements WalletService {
         return findWalletDao(walletId)
                 .filter(walletDao -> walletDao.getCurrentBalance().compareTo(request.getAmount()) >= 0)
                 .switchIfEmpty(Mono.error(new InsufficientFundsException()))
-                .flatMap(walletDao -> {
-                    BigDecimal updatedBalance = walletDao.getCurrentBalance().subtract(request.getAmount());
-                    return walletRepository.save(new WalletDao(walletId, updatedBalance));
-                })
+                .flatMap(chargeWalletInDB(walletId, request.getAmount()))
                 .map(fromDaoToDto())
                 .doOnError(throwable -> log.error("Error while charging the wallet {}: {}", walletId, throwable.getMessage()))
                 .doOnNext(walletDto -> log.debug("Successfully charged the wallet {}", walletId));
     }
 
+    /**
+     * In case errors occur while calling the Stripe service, revert the changes in the DB
+     */
     @Override
     public Mono<WalletDto> recharge(Long walletId, TopUpRequest request) {
         return findWalletDao(walletId)
-                .flatMap(wallet -> stripeService.charge(request.getCreditCardNumber(), request.getAmount())
-                        .map(v -> wallet))
                 .flatMap(walletDao -> {
                     BigDecimal updatedBalance = walletDao.getCurrentBalance().add(request.getAmount());
                     return walletRepository.save(new WalletDao(walletId, updatedBalance));
                 })
+                .flatMap(wallet -> stripeService.charge(request.getCreditCardNumber(), request.getAmount())
+                        .map(b -> wallet)
+                        .onErrorResume(e -> chargeWalletInDB(walletId, request.getAmount()).apply(wallet)
+                                .then(Mono.error(e))))
                 .map(fromDaoToDto())
-                .doOnError(throwable -> log.error("Error while recharging the wallet {}: {}", walletId, throwable.getMessage()))
-                .doOnNext(walletDto -> log.debug("Successfully recharged the wallet {}", walletId));
+                .doOnError(t -> log.error("Error while recharging the wallet {}: {}", walletId, t.getMessage()))
+                .doOnNext(walletDto -> log.debug("Successfully recharged the wallet {}", walletDto.getId()));
+    }
+
+    private Function<WalletDao, Mono<WalletDao>> chargeWalletInDB(Long walletId, BigDecimal amount) {
+        return walletDao -> {
+            BigDecimal updatedBalance = walletDao.getCurrentBalance().subtract(amount);
+            return walletRepository.save(new WalletDao(walletId, updatedBalance));
+        };
     }
 
     @Override

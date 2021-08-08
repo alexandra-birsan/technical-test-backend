@@ -1,19 +1,24 @@
 package com.playtomic.tests.wallet;
 
 import com.playtomic.tests.wallet.api.WalletController;
+import com.playtomic.tests.wallet.dao.WalletDao;
 import com.playtomic.tests.wallet.dto.PaymentRequest;
+import com.playtomic.tests.wallet.dto.TopUpRequest;
 import com.playtomic.tests.wallet.dto.WalletDto;
 import com.playtomic.tests.wallet.exception.CustomExceptionsHandler;
+import com.playtomic.tests.wallet.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 
@@ -26,6 +31,8 @@ public class WalletApplicationIT {
 
     @Autowired
     private WalletController walletController;
+    @Autowired
+    private WalletRepository walletRepository;
     @Autowired
     private CustomExceptionsHandler customExceptionsHandler;
 
@@ -67,8 +74,26 @@ public class WalletApplicationIT {
     }
 
     @Test
-    void charge() {
+    void walletNotRechargedWhenStripeExceptionThrown() {
         long walletId = 3L;
+        TopUpRequest topUpRequest = createTopUpRequest();
+        topUpRequest.setAmount(BigDecimal.valueOf(4));
+
+        sendPutRequest(walletId, "/wallet/%s/top-up")
+                .bodyValue(topUpRequest)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+
+
+        StepVerifier.create(walletRepository.findById(walletId))
+                .expectNext(new WalletDao(walletId, BigDecimal.valueOf(800.3)))
+                .verifyComplete();
+    }
+
+    @Test
+    void charge() {
+        long walletId = 4L;
 
         sendPutRequest(walletId, "/wallet/%s/payment")
                 .bodyValue(createPaymentRequest())
@@ -84,7 +109,7 @@ public class WalletApplicationIT {
 
     @Test
     void chargeWhenIncorrectRequestBody() {
-        long walletId = 3L;
+        long walletId = 4L;
 
         sendPutRequest(walletId, "/wallet/%s/payment")
                 .bodyValue(new PaymentRequest())

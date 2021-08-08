@@ -37,6 +37,7 @@ public class LocalDatabaseSetup {
         return repository.saveAll(Flux.fromIterable(List.of(
                 createWallet(BigDecimal.valueOf(1000)),
                 createWallet(BigDecimal.valueOf(500.3)),
+                createWallet(BigDecimal.valueOf(800.3)),
                 createWallet(BigDecimal.valueOf(2500.56)))));
     }
 

@@ -14,6 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
+
 import static com.playtomic.tests.wallet.utils.TestData.*;
 import static org.mockito.Mockito.when;
 
@@ -58,6 +60,8 @@ public class DefaultWalletServiceTest {
     void rechargeWalletWhenStripeExceptionThrown() {
         mockSuccessfulFindById();
         when(stripeService.charge(CREDIT_CARD_NUMBER, TOP_UP_AMOUNT)).thenReturn(Mono.error(new StripeServiceException()));
+        mockSuccessfulSave(CURRENT_BALANCE);
+        mockSuccessfulSave(CURRENT_BALANCE.add(TOP_UP_AMOUNT));
 
         sendTopUpRequest(createTopUpRequest())
                 .expectError(StripeServiceException.class)
@@ -67,7 +71,7 @@ public class DefaultWalletServiceTest {
     @Test
     void rechargeWalletSuccessfully() {
         mockSuccessfulFindById();
-        mockSuccessfulSave();
+        mockSuccessfulSave(CURRENT_BALANCE.add(TOP_UP_AMOUNT));
         mockSuccessfulStripeCall();
 
         sendTopUpRequest(createTopUpRequest())
@@ -83,12 +87,12 @@ public class DefaultWalletServiceTest {
         when(repository.findById(WALLET_ID)).thenReturn(Mono.just(new WalletDao(WALLET_ID, CURRENT_BALANCE)));
     }
 
-    private void mockSuccessfulSave() {
-        WalletDao updatedWallet = new WalletDao(WALLET_ID, CURRENT_BALANCE.add(TOP_UP_AMOUNT));
-        when(repository.save(updatedWallet)).thenReturn(Mono.just(updatedWallet));
-    }
-
     private void mockSuccessfulStripeCall() {
         when(stripeService.charge(CREDIT_CARD_NUMBER, TOP_UP_AMOUNT)).thenReturn(Mono.just(true));
+    }
+
+    private void mockSuccessfulSave(BigDecimal currentBalance) {
+        WalletDao updatedWallet = new WalletDao(WALLET_ID, currentBalance);
+        when(repository.save(updatedWallet)).thenReturn(Mono.just(updatedWallet));
     }
 }
