@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.util.Optional;
 
-import static com.playtomic.tests.wallet.utils.TestData.*;
+import static com.playtomic.tests.wallet.utils.TestDataUtils.*;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest(controllers = WalletController.class)

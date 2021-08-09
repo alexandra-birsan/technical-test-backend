@@ -16,7 +16,7 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 
-import static com.playtomic.tests.wallet.utils.TestData.*;
+import static com.playtomic.tests.wallet.utils.TestDataUtils.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -71,11 +71,12 @@ public class DefaultWalletServiceTest {
     @Test
     void rechargeWalletSuccessfully() {
         mockSuccessfulFindById();
-        mockSuccessfulSave(CURRENT_BALANCE.add(TOP_UP_AMOUNT));
+        BigDecimal expectedAmount = CURRENT_BALANCE.add(TOP_UP_AMOUNT);
+        mockSuccessfulSave(expectedAmount);
         mockSuccessfulStripeCall();
 
         sendTopUpRequest(createTopUpRequest())
-                .expectNext(new WalletDto(WALLET_ID, CURRENT_BALANCE.add(TOP_UP_AMOUNT)))
+                .expectNext(new WalletDto(WALLET_ID, expectedAmount))
                 .verifyComplete();
     }
 

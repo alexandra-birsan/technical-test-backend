@@ -12,6 +12,7 @@ import com.playtomic.tests.wallet.service.WalletService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -31,6 +32,7 @@ public class DefaultWalletService implements WalletService {
     }
 
     @Override
+    @Transactional
     public Mono<WalletDto> charge(Long walletId, PaymentRequest request) {
         return findWalletDao(walletId)
                 .filter(walletDao -> walletDao.getCurrentBalance().compareTo(request.getAmount()) >= 0)
@@ -45,6 +47,7 @@ public class DefaultWalletService implements WalletService {
      * In case errors occur while calling the Stripe service, revert the changes in the DB
      */
     @Override
+    @Transactional
     public Mono<WalletDto> recharge(Long walletId, TopUpRequest request) {
         return findWalletDao(walletId)
                 .flatMap(walletDao -> {

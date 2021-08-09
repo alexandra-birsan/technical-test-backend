@@ -7,7 +7,7 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 
-import static com.playtomic.tests.wallet.utils.TestData.CREDIT_CARD_NUMBER;
+import static com.playtomic.tests.wallet.utils.TestDataUtils.CREDIT_CARD_NUMBER;
 
 public class DefaultStripeServiceTest {
 
