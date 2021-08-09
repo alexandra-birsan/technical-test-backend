@@ -77,3 +77,6 @@ Things to improve:
 - In case of BAD_REQUEST responses, include the reason of failure in the error response (get it from the ConstraintViolations)
 - Have business & error metrics (e.g. total of top-ups, payments, Stripe call failures) from the application
 - Check if the logs can be improved
+
+If IntelliJ does not recognize Lombok, please go to Preferences, search for Plugins. Type "Lombok" in the plugin search box.
+The "Lombok Plugin" should show up. :)
