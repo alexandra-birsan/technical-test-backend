@@ -62,3 +62,18 @@ Ten en cuenta que es un servicio que conviviría en un entorno de microservicios
 Le puedes dedicar el tiempo que quieras, pero hemos estimado que 3-4 horas es suficiente para demostrar [los requisitos del puesto.](OFFER.md)
 No hace falta que lo documentes pero puedes anotar todo lo que quieras como explicación o justificación de lo que hagas o dejes sin hacer.
 Tampoco necesitas hacer testing de todo, pero sí nos gustaría ver varios tipos de test.
+
+Things to improve:
+
+- authorize the endpoints (e.g. use a JWT token that needs to be validated for every request). 
+  This validation should also check that wallet from the request corresponds to that from the JWT, for instance.
+  Currently, user A can find / update the wallet of user B just by guessing his/ her wallet id.
+- encrypt the credit card number (don’t send the credit card number in plain text in the request body, encrypt it on the client side)
+- in case the request to the Stripe service fails for reasons other than BAD REQUEST (other status codes can also be included here), have a retry mechanism for the call. 
+  This should be discussed though, as retrying a payment call might not be allowed. The main idea is that given the microservices architecture, we should take into account the possible failures
+- there should also be an audit table where all the changes made to the wallets are recorded
+- Add unit tests for all the services/ exception handlers: cover both the positive & negative scenarios
+- More ITs for the concurrent calls (e.g. recharge & find by id, charge & find by id) - to check that the values are consistent
+- In case of BAD_REQUEST responses, include the reason of failure in the error response (get it from the ConstraintViolations)
+- Have business & error metrics (e.g. total of top-ups, payments, Stripe call failures) from the application
+- Check if the logs can be improved
